@@ -3,6 +3,7 @@ import os
 import argparse
 import openai
 from dotenv import load_dotenv
+from jinja2 import Environment, FileSystemLoader
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -27,11 +28,10 @@ def get_recipe_text(args):
         sys.exit(1)
 
 def generate_markdown(recipe_text):
-    prompt_path = os.path.join(os.path.dirname(__file__), "prompt.md")
-    with open(prompt_path, "r", encoding="utf-8") as f:
-        prompt_template = f.read()
-    
-    prompt = f"{prompt_template}\n\n{recipe_text}"
+    template_dir = os.path.dirname(__file__)
+    env = Environment(loader=FileSystemLoader(template_dir))
+    template = env.get_template("prompt.j2")
+    prompt = template.render(recipe_text=recipe_text)
 
     try:
         response = openai.chat.completions.create(
